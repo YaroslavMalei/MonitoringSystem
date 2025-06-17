@@ -1,0 +1,33 @@
+networks:
+  monitoring:
+    driver: bridge  # Використовується мережа типу "bridge" для ізоляції сервісів
+
+# Визначення сервісів, які запускаються через Docker
+services:
+  
+  # Сервіс для Victoriametrics — бази даних для зберігання метрик
+  victoriametrics:  
+    image: victoriametrics/victoria-metrics:v1.95.0  # Образ Victoriametrics версії 1.95.0
+    container_name: victoriametrics  # Ім'я контейнера для зручного доступу
+    ports:
+      - "8428:8428"  # Порт 8428 для доступу до Victoriametrics через браузер
+    volumes:
+      - ./vmdata:/storage  # Локальна папка ./vmdata монтується для зберігання даних
+      - ./vmconfig.yml:/etc/victoriametrics/scrape.yml  # Файл конфігурації для Victoriametrics
+    command:
+      - --promscrape.config=/etc/victoriametrics/scrape.yml  # Вказівка на файл конфігурації
+    networks:
+      - monitoring   # Підключення до мережі monitoring
+    restart: always  # Автоматичний перезапуск у разі збою
+
+  # Сервіс для Grafana — інструменту візуалізації даних
+  grafana:
+    image: grafana/grafana-oss:10.4.2  # Образ Grafana версії 10.4.2
+    container_name: grafana  # Ім'я контейнера для зручного доступу
+    ports:
+      - "3000:3000"  # Порт 3000 для доступу до Grafana через браузер
+    volumes:
+      - ./grafana-data:/var/lib/grafana  # Локальна папка для збереження даних Grafana
+    networks:
+      - monitoring   # Підключення до мережі monitoring
+    restart: always  # Автоматичний перезапуск у разі збою
